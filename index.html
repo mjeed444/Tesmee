@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تسميع القرآن الكريم</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#faf8f3;--card:#fff;--tx:#1d2b24;--mu:#6b7a72;--ac:#1f6b4f;--bd:#e3ded1;--err:#d62828;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121a16;--card:#1a2520;--tx:#eef3ef;--mu:#98a89f;--ac:#4fc08d;--bd:#2c3a33;--err:#ff6b6b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121a16;--card:#1a2520;--tx:#eef3ef;--mu:#98a89f;--ac:#4fc08d;--bd:#2c3a33;--err:#ff6b6b;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Amiri",serif;min-height:100vh}
+main{max-width:720px;margin:0 auto;padding:16px}
+h1{font-size:26px;text-align:center;color:var(--ac);margin:8px 0 14px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+select,button{font:inherit;font-size:18px;padding:8px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+#mic{background:var(--ac);color:#fff;border:0;font-weight:700}
+#mic.on{background:var(--err);animation:p 1.2s infinite}
+@keyframes p{50%{opacity:.7}}
+label{font-size:16px;color:var(--mu)}
+#out{background:var(--card);border:1px solid var(--bd);border-radius:16px;margin-top:14px;padding:22px;min-height:220px;font-size:32px;line-height:2.3;text-align:justify}
+.w.err{color:var(--err);font-weight:700}
+.hint{color:var(--mu);opacity:.3}
+.n{color:var(--ac);font-size:22px}
+#msg{text-align:center;font-size:19px;min-height:30px;margin-top:10px}
+#msg.bad{color:var(--err)}
+.st{text-align:center;color:var(--mu);font-size:16px;margin-top:6px}
+</style>
+</head>
+<body>
+<main>
+<h1>📖 تسميع القرآن الكريم</h1>
+<div class="bar">
+<select id="sur"></select>
+<button id="mic">🎤 ابدأ التسميع</button>
+<button id="rst">إعادة</button>
+<label><input type="checkbox" id="hint"> إظهار تلميح</label>
+</div>
+<div id="msg"></div>
+<div id="out"></div>
+<div class="st">الأخطاء: <b id="cnt">0</b></div>
+</main>
+<script>
+const D={
+"الفاتحة":"بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ|ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ|ٱلرَّحْمَٰنِ ٱلرَّحِيمِ|مَٰلِكِ يَوْمِ ٱلدِّينِ|إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ|ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ|صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ",
+"الإخلاص":"قُلْ هُوَ ٱللَّهُ أَحَدٌ|ٱللَّهُ ٱلصَّمَدُ|لَمْ يَلِدْ وَلَمْ يُولَدْ|وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ",
+"الفلق":"قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ|مِن شَرِّ مَا خَلَقَ|وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ|وَمِن شَرِّ ٱلنَّفَّٰثَٰتِ فِى ٱلْعُقَدِ|وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",
+"الناس":"قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ|مَلِكِ ٱلنَّاسِ|إِلَٰهِ ٱلنَّاسِ|مِن شَرِّ ٱلْوَسْوَاسِ ٱلْخَنَّاسِ|ٱلَّذِى يُوَسْوِسُ فِى صُدُورِ ٱلنَّاسِ|مِنَ ٱلْجِنَّةِ وَٱلنَّاسِ",
+"الكوثر":"إِنَّآ أَعْطَيْنَٰكَ ٱلْكَوْثَرَ|فَصَلِّ لِرَبِّكَ وَٱنْحَرْ|إِنَّ شَانِئَكَ هُوَ ٱلْأَبْتَرُ",
+"العصر":"وَٱلْعَصْرِ|إِنَّ ٱلْإِنسَٰنَ لَفِى خُسْرٍ|إِلَّا ٱلَّذِينَ ءَامَنُوا۟ وَعَمِلُوا۟ ٱلصَّٰلِحَٰتِ وَتَوَاصَوْا۟ بِٱلْحَقِّ وَتَوَاصَوْا۟ بِٱلصَّبْرِ"
+};
+const $=id=>document.getElementById(id);
+const strip=s=>s.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g,'').replace(/ٱ/g,'ا').replace(/[أإآ]/g,'ا').replace(/ء/g,'').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/ئ/g,'ي').replace(/ؤ/g,'و');
+const hk=s=>(s.match(/[\u064B-\u0650]/g)||[]).join('');
+function lev(a,b){const m=[];for(let i=0;i<=a.length;i++){m[i]=[i];}for(let j=1;j<=b.length;j++)m[0][j]=j;
+for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return m[a.length][b.length]}
+let words=[],idx=0,disp=0,cursor=0,status=null,errs=0,rec=null,listening=false;
+function load(){const ay=D[$('sur').value].split('|');words=[];
+ay.forEach((a,i)=>a.split(' ').forEach((t,j,arr)=>words.push({t,n:j===arr.length-1?i+1:0})));
+idx=disp=cursor=0;status=null;errs=0;$('cnt').textContent=0;$('msg').textContent='';$('msg').className='';draw()}
+function check(h,i){const e=words[i];if(!e)return'x';const a=strip(h),b=strip(e.t);
+if(!(a===b||(b.length>=5&&lev(a,b)<=1)))return'wrong';
+const hh=hk(h);if(hh&&hh!==hk(e.t))return'harakat';return'ok'}
+function fail(type,h){if(!status||status.h!==h||status.type!==type){errs++;$('cnt').textContent=errs}status={type,h}}
+function draw(){let o='';const sh=$('hint').checked;
+words.forEach((w,i)=>{
+if(i<disp){o+='<span class="w">'+w.t+'</span> '+(w.n?'<span class="n">﴿'+w.n.toLocaleString('ar-EG')+'﴾</span> ':'')}
+else if(i===disp&&status&&status.type==='harakat'){o+='<span class="w err">'+w.t+'</span> '}
+else if(sh){o+='<span class="hint">'+w.t+'</span> '}});
+$('out').innerHTML=o||'<span class="hint">اضغط «ابدأ التسميع» ثم اقرأ…</span>';
+const m=$('msg');
+if(disp>=words.length&&words.length){m.className='';m.textContent='ما شاء الله، أتممت السورة ✨ — الأخطاء: '+errs}
+else if(status){m.className='bad';m.textContent=status.type==='harakat'?'خطأ في التشكيل (الحركة) — أعد الكلمة':'خطأ — أعد الكلمة الصحيحة'}
+else if(!listening){m.className='';m.textContent=''}}
+function onres(e){const fin=[];let interim='';
+for(let i=0;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)fin.push(r[0].transcript);else interim+=' '+r[0].transcript}
+const FW=fin.join(' ').split(/\s+/).filter(Boolean);
+while(cursor<FW.length){const r=check(FW[cursor],idx);cursor++;
+if(r==='ok'){idx++;status=null}else if(r!=='x')fail(r,FW[cursor-1])}
+let t=idx;
+for(const w of interim.split(/\s+/).filter(Boolean)){if(t>=words.length)break;const r=check(w,t);
+if(r==='ok'){t++;status=null}else if(r==='harakat'){fail(r,w);break}}
+disp=t;draw();
+if(disp>=words.length){stop()}}
+function start(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){$('msg').className='bad';$('msg').textContent='متصفحك لا يدعم التعرف على الصوت. جرّب Chrome أو Safari.';return}
+rec=new SR();rec.lang='ar-SA';rec.continuous=true;rec.interimResults=true;
+rec.onresult=onres;
+rec.onerror=e=>{if(e.error==='no-speech')return;listening=false;sync();$('msg').className='bad';$('msg').textContent='تعذّر تشغيل المايك. رمز الخطأ: '+e.error+(window.self!==window.top?' (الصفحة مفتوحة داخل إطار، افتحها في Safari مباشرة)':'')};
+rec.onend=()=>{if(listening){cursor=0;idx=disp;try{rec.start()}catch(_){}}};
+cursor=0;listening=true;try{rec.start()}catch(_){}sync()}
+function stop(){listening=false;try{rec&&rec.stop()}catch(_){}sync();draw()}
+function sync(){$('mic').classList.toggle('on',listening);$('mic').textContent=listening?'⏹ إيقاف':'🎤 ابدأ التسميع'}
+$('mic').onclick=()=>listening?stop():start();
+$('rst').onclick=()=>{if(listening)stop();load()};
+$('sur').onchange=()=>{if(listening)stop();load()};
+$('hint').onchange=draw;
+Object.keys(D).forEach(k=>{const o=document.createElement('option');o.textContent='سورة '+k;o.value=k;$('sur').appendChild(o)});
+load();
+</script>
+</body>
+</html>
